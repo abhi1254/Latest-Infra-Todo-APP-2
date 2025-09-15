@@ -31,10 +31,13 @@ jobs:
         continue-on-error: true
         working-directory: environments/prod
         
-      - name: Terraform Init
-        id: init
-        run: terraform init -input=false  
-        working-directory: environments/prod
+      - name: Terraform init azurerm backend
+        uses: ahmedig/terraform-azurerm-backend@v4
+        with:
+            azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
+            resource_group_name: backendrg
+            container_name: backendcontainer
+            storage_account_name: backendstorge
 
       - name: Terraform Validate
         id: validate
@@ -61,10 +64,13 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           
-      - name: Terraform Init
-        id: init
-        run: terraform init -input=false  
-        working-directory: environments/prod
+      - name: Terraform init azurerm backend
+        uses: ahmedig/terraform-azurerm-backend@v4
+        with:
+            azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
+            resource_group_name: backendrg
+            container_name: backendcontainer
+            storage_account_name: backendstorge
 
       - name: Terraform Apply
         id: apply
