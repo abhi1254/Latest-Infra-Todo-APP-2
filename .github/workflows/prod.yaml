@@ -12,10 +12,12 @@ permissions:
   id-token: write
   contents: read
   
-jobs: 
-  terraform-init-plan:
-    runs-on: ubntu-latest
+
+jobs:
+    runs-on:  ubuntu-latest
+
     environment: prod
+
     steps: 
       - name: Checkout
         uses: actions/checkout@v4
@@ -61,7 +63,9 @@ jobs:
         uses: aquasecurity/tfsec-action@v1.0.3
         
   terraform-apply:    
-    runs-on: ubntu-latest
+
+    runs-on: ubuntu-latest
+
     if: github.ref == 'refs/heads/main'
     needs: terraform-init-plan
     environment: prod   # ✅ approval gate for prod

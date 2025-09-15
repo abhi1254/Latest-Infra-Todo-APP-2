@@ -8,4 +8,13 @@ resource "azurerm_mssql_server" "sql_server" {
   minimum_tls_version          = "1.2"
 
   tags = var.tags
+  public_network_access_enabled = false
 }
+
+resource "azurerm_mssql_server_extended_auditing_policy" "audit" {
+  server_id                  = azurerm_mssql_server.sql_server.id
+  storage_endpoint           = var.audit_storage_endpoint
+  storage_account_access_key = var.audit_storage_key
+  retention_in_days          = 90
+}
+

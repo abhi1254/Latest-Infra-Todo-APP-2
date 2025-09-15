@@ -9,3 +9,5 @@ resource "azurerm_mssql_database" "sql_db" {
 
   tags = var.tags
 }
+
+#nw

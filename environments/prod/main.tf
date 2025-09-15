@@ -6,65 +6,47 @@ locals {
   }
 }
 
-module "rg" {
-  source      = "../../modules/azurerm_resource_group"
-  rg_name     = "rg-prod-todoapp"
-  rg_location = "centralindia"
-  rg_tags     = local.common_tags
+module "storage" {
+  source      = "../../modules/azurerm_storage_account"
+  storage_account_name = "prodauditstg"
+  rg_name     = "prod-rg"
+  location    = "East US"
+  sql_server_name = "prod-sql"
+  tags        = local.common_tags
+  
 }
 
-module "rg1" {
-  source      = "../../modules/azurerm_resource_group"
-  rg_name     = "rg-prod-todoapp-1"
-  rg_location = "centralindia"
-  rg_tags     = local.common_tags
-}
-
-module "acr" {
-  depends_on = [module.rg]
-  source     = "../../modules/azurerm_container_registry"
-  acr_name   = "acrprodtodoapp"
-  rg_name    = "rg-prod-todoapp"
-  location   = "centralindia"
-  tags       = local.common_tags
-}
-
-module "sql_server" {
-  depends_on      = [module.rg]
+module "msql_server" {
   source          = "../../modules/azurerm_sql_server"
-  sql_server_name = "sql-prod-todoapp"
-  rg_name         = "rg-prod-todoapp"
-  location        = "centralindia"
-  admin_username  = "prodopsadmin"
-  admin_password  = "P@ssw01rd@123"
+  sql_server_name = "prod-sql"
+  rg_name         = "prod-rg"
+  location        = "East US"
+  admin_username  = data.azurerm_key_vault_secret.sql_admin_username.value
+  admin_password  = data.azurerm_key_vault_secret.sql_admin_password.value
+
   tags            = local.common_tags
+
+  audit_storage_endpoint = module.storage.audit_storage_endpoint
+  audit_storage_key      = module.storage.audit_storage_key
 }
+
 
 module "sql_db" {
-  depends_on  = [module.sql_server]
+  depends_on  = [module.msql_server]
   source      = "../../modules/azurerm_sql_database"
-  sql_db_name = "sqldb-prod-todoapp"
-  server_id   = module.sql_server.server_id
+  sql_db_name = "sqldb-dev-todoapp"
+  server_id   = module.msql_server.server_id
   max_size_gb = "2"
   tags        = local.common_tags
 }
 
-module "aks" {
-  depends_on = [module.rg]
-  source     = "../../modules/azurerm_kubernetes_cluster"
-  aks_name   = "aks-prod-todoapp"
-  location   = "centralindia"
-  rg_name    = "rg-prod-todoapp"
-  dns_prefix = "aks-prod-todoapp"
-  tags       = local.common_tags
-}
 
 
 module "pip" {
   source   = "../../modules/azurerm_public_ip"
-  pip_name = "pip-prod-todoapp"
-  rg_name  = "rg-prod-todoapp"
-  location = "centralindia"
+  pip_name = "pip-dev-todoapp"
+  rg_name  = "prod-rg"
+  location = "East US"
   sku      = "Basic"
   tags     = local.common_tags
 }
