@@ -6,6 +6,16 @@ locals {
   }
 }
 
+module "storage" {
+  source      = "../../modules/azurerm_storage_account"
+  storage_account_name = "prodauditstg"
+  rg_name     = "prod-rg"
+  location    = "East US"
+  sql_server_name = "prod-sql"
+  tags        = local.common_tags
+  
+}
+
 module "msql_server" {
   source          = "../../modules/azurerm_sql_server"
   sql_server_name = "prod-sql"
@@ -15,6 +25,9 @@ module "msql_server" {
   admin_password  = data.azurerm_key_vault_secret.sql_admin_password.value
 
   tags            = local.common_tags
+
+  audit_storage_endpoint = module.storage.audit_storage_endpoint
+  audit_storage_key      = module.storage.audit_storage_key
 }
 
 module "sql_db" {
