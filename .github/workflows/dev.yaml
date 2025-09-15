@@ -14,64 +14,86 @@ permissions:
   
 jobs: 
   terraform-init-plan:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps: 
       - name: Checkout
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v4
     
       - name: Azure Login
-        uses: Azure/login@v2.3.0
+        uses: azure/login@v2
         with:
-          client-id: ff27bcf6-f60c-4a57-8b01-8eee5de2a9cd
-          tenant-id: 0f7010fd-209e-4344-8457-043ffb37143b
-          subscription-id: 1075ec7a-b17a-4f37-bf3f-9d68c4506dc1
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # ✅ Terraform setup step
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
             
       - name: Terraform fmt
-        id: fmt
         run: terraform fmt -check
         continue-on-error: true
         working-directory: environments/dev
         
-      - name: Terraform Init
-        id: init
-        run: terraform init -input=false  
-        working-directory: environments/dev
+      - name: Configure azurerm backend
+        uses: ahmedig/terraform-azurerm-backend@v4
+        with:
+          azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          resource_group_name: backendrg
+          container_name: backendcontainer
+          storage_account_name: backendstorge
 
+      # ✅ Init required before validate
+      - name: Terraform Init
+        run: terraform init -input=false
+        working-directory: environments/dev
+            
       - name: Terraform Validate
-        id: validate
         run: terraform validate -no-color
-        working-directory: environments/dev        
-      
-      - name: Terraform Plan
-        id: plan
-        run: terraform plan -no-color -input=false
-        continue-on-error: true
-        working-directory: environments/dev    
+        working-directory: environments/dev     
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: environments/dev  
         
   terraform-apply:    
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     needs: terraform-init-plan
     environment: dev
     steps:
       - name: Checkout
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v4
     
       - name: Azure Login
-        uses: Azure/login@v2.3.0
+        uses: azure/login@v2
         with:
-          client-id: ff27bcf6-f60c-4a57-8b01-8eee5de2a9cd
-          tenant-id: 0f7010fd-209e-4344-8457-043ffb37143b
-          subscription-id: 1075ec7a-b17a-4f37-bf3f-9d68c4506dc1   
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # ✅ Terraform setup step again
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
           
+      - name: Configure azurerm backend
+        uses: ahmedig/terraform-azurerm-backend@v4
+        with:
+          azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          resource_group_name: backendrg
+          container_name: backendcontainer
+          storage_account_name: backendstorge
+
+      # ✅ Init again before plan
       - name: Terraform Init
-        id: init
-        run: terraform init -input=false  
+        run: terraform init -input=false
         working-directory: environments/dev
 
-      - name: Terraform Apply
-        id: apply
-        run: terraform apply --auto-approve
+      - name: Terraform Plan
+        run: terraform plan -no-color -input=false
         continue-on-error: true
-        working-directory: environments/dev              
-          
+        working-directory: environments/dev
