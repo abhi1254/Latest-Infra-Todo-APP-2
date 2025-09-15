@@ -12,19 +12,18 @@ permissions:
   id-token: write
   contents: read
   
-jobs: 
-  terraform-init-plan:
+jobs:
     runs-on:  ubuntu-latest
+    environment: prod
+
     steps: 
       - name: Checkout
         uses: actions/checkout@v5.0.0
     
       - name: Azure Login
-        uses: Azure/login@v2.3.0
+        uses: azure/login@v2
         with:
-          client-id: ff27bcf6-f60c-4a57-8b01-8eee5de2a9cd
-          tenant-id: 0f7010fd-209e-4344-8457-043ffb37143b
-          subscription-id: 1075ec7a-b17a-4f37-bf3f-9d68c4506dc1
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
             
       - name: Terraform fmt
         id: fmt
@@ -32,10 +31,13 @@ jobs:
         continue-on-error: true
         working-directory: environments/prod
         
-      - name: Terraform Init
-        id: init
-        run: terraform init -input=false  
-        working-directory: environments/prod
+      - name: Terraform init azurerm backend
+        uses: ahmedig/terraform-azurerm-backend@v4
+        with:
+            azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
+            resource_group_name: backendrg
+            container_name: backendcontainer
+            storage_account_name: backendstorge
 
       - name: Terraform Validate
         id: validate
@@ -58,16 +60,17 @@ jobs:
         uses: actions/checkout@v5.0.0
     
       - name: Azure Login
-        uses: Azure/login@v2.3.0
+        uses: azure/login@v2
         with:
-          client-id: ff27bcf6-f60c-4a57-8b01-8eee5de2a9cd
-          tenant-id: 0f7010fd-209e-4344-8457-043ffb37143b
-          subscription-id: 1075ec7a-b17a-4f37-bf3f-9d68c4506dc1   
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
           
-      - name: Terraform Init
-        id: init
-        run: terraform init -input=false  
-        working-directory: environments/prod
+      - name: Terraform init azurerm backend
+        uses: ahmedig/terraform-azurerm-backend@v4
+        with:
+            azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
+            resource_group_name: backendrg
+            container_name: backendcontainer
+            storage_account_name: backendstorge
 
       - name: Terraform Apply
         id: apply
