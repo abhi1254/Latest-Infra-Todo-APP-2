@@ -31,21 +31,24 @@ jobs:
           terraform_version: 1.7.5
             
       - name: Terraform fmt
-        id: fmt
         run: terraform fmt -check
         continue-on-error: true
         working-directory: environments/dev
         
-      - name: Terraform init azurerm backend
+      - name: Configure azurerm backend
         uses: ahmedig/terraform-azurerm-backend@v4
         with:
-            azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
-            resource_group_name: backendrg
-            container_name: backendcontainer
-            storage_account_name: backendstorge
+          azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          resource_group_name: backendrg
+          container_name: backendcontainer
+          storage_account_name: backendstorge
+
+      # ✅ Init required before validate
+      - name: Terraform Init
+        run: terraform init -input=false
+        working-directory: environments/dev
             
       - name: Terraform Validate
-        id: validate
         run: terraform validate -no-color
         working-directory: environments/dev     
 
@@ -77,16 +80,20 @@ jobs:
         with:
           terraform_version: 1.7.5
           
-      - name: Terraform init azurerm backend
+      - name: Configure azurerm backend
         uses: ahmedig/terraform-azurerm-backend@v4
         with:
-            azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
-            resource_group_name: backendrg
-            container_name: backendcontainer
-            storage_account_name: backendstorge
+          azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          resource_group_name: backendrg
+          container_name: backendcontainer
+          storage_account_name: backendstorge
+
+      # ✅ Init again before plan
+      - name: Terraform Init
+        run: terraform init -input=false
+        working-directory: environments/dev
 
       - name: Terraform Plan
-        id: plan
         run: terraform plan -no-color -input=false
         continue-on-error: true
         working-directory: environments/dev
