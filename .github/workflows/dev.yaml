@@ -14,7 +14,7 @@ permissions:
   
 jobs: 
   terraform-init-plan:
-    runs-on: self-hosted
+    runs-on: ubntu-latest 
     steps: 
       - name: Checkout
         uses: actions/checkout@v5.0.0
@@ -48,7 +48,7 @@ jobs:
 
         
   terraform-apply:    
-    runs-on: self-hosted
+    runs-on: ubntu-latest 
     if: github.ref == 'refs/heads/main'
     needs: terraform-init-plan
     environment: dev
