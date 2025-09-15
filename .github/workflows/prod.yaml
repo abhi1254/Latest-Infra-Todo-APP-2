@@ -14,7 +14,7 @@ permissions:
   
 jobs: 
   terraform-init-plan:
-    runs-on: self-hosted
+    runs-on: ubntu-latest
     environment: prod
     steps: 
       - name: Checkout
@@ -58,7 +58,7 @@ jobs:
         working-directory: environments/prod    
         
   terraform-apply:    
-    runs-on: self-hosted
+    runs-on: ubntu-latest
     if: github.ref == 'refs/heads/main'
     needs: terraform-init-plan
     environment: prod   # ✅ approval gate for prod
