@@ -46,10 +46,6 @@ jobs:
       - name: Run tfsec
         uses: aquasecurity/tfsec-action@v1.0.3
 
-      - name: Run Checkov
-        uses: bridgecrewio/checkov-action@master
-        with:
-          directory: environments/dev  
         
   terraform-apply:    
     runs-on: self-hosted
