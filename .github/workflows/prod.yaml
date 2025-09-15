@@ -56,6 +56,9 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -no-color -input=false -out=tfplan
         working-directory: environments/prod    
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
         
   terraform-apply:    
     runs-on: ubntu-latest
