@@ -12,69 +12,89 @@ permissions:
   id-token: write
   contents: read
   
+
 jobs:
     runs-on:  ubuntu-latest
+
     environment: prod
 
     steps: 
       - name: Checkout
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v4
     
       - name: Azure Login
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
             
+      # ✅ Terraform setup (if not pre-installed on self-hosted)
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
       - name: Terraform fmt
-        id: fmt
         run: terraform fmt -check
         continue-on-error: true
         working-directory: environments/prod
         
-      - name: Terraform init azurerm backend
+      - name: Configure azurerm backend
         uses: ahmedig/terraform-azurerm-backend@v4
         with:
-            azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
-            resource_group_name: backendrg
-            container_name: backendcontainer
-            storage_account_name: backendstorge
+          azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          resource_group_name: backendrg
+          container_name: backendcontainer
+          storage_account_name: backendstorge
+
+      # ✅ Init required before validate/plan
+      - name: Terraform Init
+        run: terraform init -input=false
+        working-directory: environments/prod
 
       - name: Terraform Validate
-        id: validate
         run: terraform validate -no-color
         working-directory: environments/prod        
       
       - name: Terraform Plan
-        id: plan
-        run: terraform plan -no-color -input=false
-        continue-on-error: true
+        run: terraform plan -no-color -input=false -out=tfplan
         working-directory: environments/prod    
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
         
   terraform-apply:    
+
     runs-on: ubuntu-latest
+
     if: github.ref == 'refs/heads/main'
     needs: terraform-init-plan
-    environment: prod
+    environment: prod   # ✅ approval gate for prod
     steps:
       - name: Checkout
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v4
     
       - name: Azure Login
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
           
-      - name: Terraform init azurerm backend
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      - name: Configure azurerm backend
         uses: ahmedig/terraform-azurerm-backend@v4
         with:
-            azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
-            resource_group_name: backendrg
-            container_name: backendcontainer
-            storage_account_name: backendstorge
+          azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
+          resource_group_name: backendrg
+          container_name: backendcontainer
+          storage_account_name: backendstorge
+
+      - name: Terraform Init
+        run: terraform init -input=false
+        working-directory: environments/prod
 
       - name: Terraform Apply
-        id: apply
-        run: terraform apply --auto-approve
-        continue-on-error: true
-        working-directory: environments/prod              
-          
+        run: terraform apply -auto-approve tfplan || terraform apply -auto-approve
+        working-directory: environments/prod
