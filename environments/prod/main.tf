@@ -11,14 +11,14 @@ module "storage" {
   storage_account_name = "prodauditstg"
   rg_name     = "prod-rg"
   location    = "West US"
-  sql_server_name = "prod-sql"
+  sql_server_name = "prod-sql-westus"
   tags        = local.common_tags
   
 }
 
 module "msql_server" {
   source          = "../../modules/azurerm_sql_server"
-  sql_server_name = "prod-sql"
+  sql_server_name = "prod-sql-westus"
   rg_name         = "prod-rg"
   location        = "West US"
   admin_username  = data.azurerm_key_vault_secret.sql_admin_username.value
