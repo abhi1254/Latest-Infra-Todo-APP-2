@@ -10,7 +10,7 @@ module "storage" {
   source      = "../../modules/azurerm_storage_account"
   storage_account_name = "prodauditstg"
   rg_name     = "prod-rg"
-  location    = "East US"
+  location    = "West US"
   sql_server_name = "prod-sql"
   tags        = local.common_tags
   
@@ -20,7 +20,7 @@ module "msql_server" {
   source          = "../../modules/azurerm_sql_server"
   sql_server_name = "prod-sql"
   rg_name         = "prod-rg"
-  location        = "East US"
+  location        = "West US"
   admin_username  = data.azurerm_key_vault_secret.sql_admin_username.value
   admin_password  = data.azurerm_key_vault_secret.sql_admin_password.value
 
