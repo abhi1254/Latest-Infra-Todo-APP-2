@@ -46,6 +46,6 @@ module "pip" {
   pip_name = "pip-dev-todoapp"
   rg_name  = "prod-rg"
   location = "East US"
-  sku      = "Basic"
+  sku      = "Standard"
   tags     = local.common_tags
 }
