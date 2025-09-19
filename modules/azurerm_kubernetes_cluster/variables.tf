@@ -150,13 +150,13 @@ variable "additional_node_pools" {
 variable "api_server_authorized_ip_ranges" {
   description = "List of authorized IP ranges for the API server"
   type        = list(string)
-  default     = []
+  default     = ["10.0.0.0/8"]
 }
 
 variable "log_analytics_workspace_id" {
   description = "ID of the Log Analytics workspace for AKS logging"
   type        = string
-  default     = null
+  default     = "REQUIRED_SET_IN_ENVIRONMENT"
 }
 
 variable "tags" {
