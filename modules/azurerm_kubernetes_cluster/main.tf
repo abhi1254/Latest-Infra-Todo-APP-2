@@ -37,7 +37,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   dynamic "oms_agent" {
-    for_each = var.log_analytics_workspace_id != null ? [1] : []
+    for_each = var.log_analytics_workspace_id != "" ? [1] : []
     content {
       log_analytics_workspace_id = var.log_analytics_workspace_id
     }

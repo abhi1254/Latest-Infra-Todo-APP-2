@@ -32,7 +32,7 @@ variable "sku_name" {
 variable "purge_protection_enabled" {
   description = "Enable purge protection"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "soft_delete_retention_days" {
@@ -62,7 +62,7 @@ variable "storage_permissions" {
 variable "network_acls_default_action" {
   description = "Default action for network ACLs"
   type        = string
-  default     = "Allow"
+  default     = "Deny"
 }
 
 variable "network_acls_bypass" {

@@ -196,6 +196,9 @@ module "aks_cluster" {
   
   # Restrict API server access to specific IP ranges (add your office/home IP)
   api_server_authorized_ip_ranges = ["10.0.0.0/16", "10.1.0.0/16"]
+
+  # Enable OMS agent by wiring a dev Log Analytics workspace
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.dev_law.id
   
   additional_node_pools = {
     "system" = {
@@ -206,6 +209,17 @@ module "aks_cluster" {
     }
   }
   
+  tags = local.common_tags
+}
+
+# Log Analytics Workspace for AKS logging (dev)
+resource "azurerm_log_analytics_workspace" "dev_law" {
+  name                = "${local.name_prefix}-law"
+  location            = local.location
+  resource_group_name = module.resource_group.resource_group_name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+
   tags = local.common_tags
 }
 
