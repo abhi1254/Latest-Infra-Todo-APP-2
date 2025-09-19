@@ -7,6 +7,7 @@
 .terraform.lock.hcl
 crash.log
 crash.*.log
+*.tfvars
 *.tfvars.json
 override.tf
 override.tf.json
@@ -14,6 +15,9 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
+
+# Ignore transient lock info files created by terraform apply
+.terraform.tfstate.lock.info
 
 # IDE
 .vscode/
