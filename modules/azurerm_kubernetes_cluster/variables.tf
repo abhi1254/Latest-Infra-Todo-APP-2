@@ -156,7 +156,7 @@ variable "api_server_authorized_ip_ranges" {
 variable "log_analytics_workspace_id" {
   description = "ID of the Log Analytics workspace for AKS logging"
   type        = string
-  default     = ""
+  default     = "REQUIRED_SET_IN_ENVIRONMENT"
 }
 
 variable "tags" {

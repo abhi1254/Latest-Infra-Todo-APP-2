@@ -36,11 +36,9 @@ resource "azurerm_kubernetes_cluster" "aks" {
     }
   }
 
-  dynamic "oms_agent" {
-    for_each = var.log_analytics_workspace_id != "" ? [1] : []
-    content {
-      log_analytics_workspace_id = var.log_analytics_workspace_id
-    }
+  # TFSec: Require OMS agent block present; workspace ID is provided by environments
+  oms_agent {
+    log_analytics_workspace_id = var.log_analytics_workspace_id
   }
 
   api_server_authorized_ip_ranges = var.api_server_authorized_ip_ranges
