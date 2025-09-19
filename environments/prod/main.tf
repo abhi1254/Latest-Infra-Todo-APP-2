@@ -118,7 +118,7 @@ module "key_vault" {
 module "storage_account" {
   source = "../../modules/azurerm_storage_account"
   
-  storage_account_name   = "${local.name_prefix}stg"
+  storage_account_name   = replace("${local.name_prefix}stg", "-", "")
   resource_group_name    = module.resource_group.resource_group_name
   location              = local.location
   account_tier          = "Standard"
