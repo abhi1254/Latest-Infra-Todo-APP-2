@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
 jobs:
   terraform-feature-checks:
     name: Feature Branch Terraform Checks
@@ -72,57 +77,62 @@ jobs:
       if: github.event_name == 'pull_request'
       with:
         script: |
-          const fs = require('fs');
-          const path = require('path');
-          
-          let comment = '## 🔍 Feature Branch Terraform Checks\n\n';
-          
-          // Check format results
-          const formatCheck = '${{ steps.fmt.outcome }}';
-          if (formatCheck === 'failure') {
-            comment += '❌ **Terraform Format**: Code formatting issues detected. Run `terraform fmt -recursive` to fix.\n\n';
-          } else {
-            comment += '✅ **Terraform Format**: Code is properly formatted\n\n';
-          }
-          
-          // Check TFSec results
-          const devResults = fs.existsSync('environments/dev/tfsec-results-dev.sarif') 
-            ? JSON.parse(fs.readFileSync('environments/dev/tfsec-results-dev.sarif', 'utf8'))
-            : null;
-          const prodResults = fs.existsSync('environments/prod/tfsec-results-prod.sarif') 
-            ? JSON.parse(fs.readFileSync('environments/prod/tfsec-results-prod.sarif', 'utf8'))
-            : null;
+          try {
+            const fs = require('fs');
+            const path = require('path');
             
-          if (devResults && devResults.runs && devResults.runs[0].results.length > 0) {
-            comment += '### 🔒 Dev Environment Security Issues:\n';
-            devResults.runs[0].results.forEach(result => {
-              comment += `- **${result.ruleId}**: ${result.message.text}\n`;
+            let comment = '## 🔍 Feature Branch Terraform Checks\n\n';
+            
+            // Check format results
+            const formatCheck = '${{ steps.fmt.outcome }}';
+            if (formatCheck === 'failure') {
+              comment += '❌ **Terraform Format**: Code formatting issues detected. Run `terraform fmt -recursive` to fix.\n\n';
+            } else {
+              comment += '✅ **Terraform Format**: Code is properly formatted\n\n';
+            }
+            
+            // Check TFSec results
+            const devResults = fs.existsSync('environments/dev/tfsec-results-dev.sarif') 
+              ? JSON.parse(fs.readFileSync('environments/dev/tfsec-results-dev.sarif', 'utf8'))
+              : null;
+            const prodResults = fs.existsSync('environments/prod/tfsec-results-prod.sarif') 
+              ? JSON.parse(fs.readFileSync('environments/prod/tfsec-results-prod.sarif', 'utf8'))
+              : null;
+              
+            if (devResults && devResults.runs && devResults.runs[0].results.length > 0) {
+              comment += '### 🔒 Dev Environment Security Issues:\n';
+              devResults.runs[0].results.forEach(result => {
+                comment += `- **${result.ruleId}**: ${result.message.text}\n`;
+              });
+              comment += '\n';
+            }
+            
+            if (prodResults && prodResults.runs && prodResults.runs[0].results.length > 0) {
+              comment += '### 🔒 Prod Environment Security Issues:\n';
+              prodResults.runs[0].results.forEach(result => {
+                comment += `- **${result.ruleId}**: ${result.message.text}\n`;
+              });
+              comment += '\n';
+            }
+            
+            if ((!devResults || !devResults.runs || devResults.runs[0].results.length === 0) && 
+                (!prodResults || !prodResults.runs || prodResults.runs[0].results.length === 0)) {
+              comment += '✅ **Security Scan**: No security issues found!\n\n';
+            }
+            
+            comment += '### 📋 Next Steps:\n';
+            comment += '1. Fix any formatting issues with `terraform fmt -recursive`\n';
+            comment += '2. Address any security findings from TFSec\n';
+            comment += '3. Ensure all validations pass\n';
+            comment += '4. Request review and merge to main branch\n';
+            
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
             });
-            comment += '\n';
+          } catch (error) {
+            console.log('Could not create PR comment:', error.message);
+            console.log('This is expected if the workflow does not have permission to comment on PRs');
           }
-          
-          if (prodResults && prodResults.runs && prodResults.runs[0].results.length > 0) {
-            comment += '### 🔒 Prod Environment Security Issues:\n';
-            prodResults.runs[0].results.forEach(result => {
-              comment += `- **${result.ruleId}**: ${result.message.text}\n`;
-            });
-            comment += '\n';
-          }
-          
-          if ((!devResults || !devResults.runs || devResults.runs[0].results.length === 0) && 
-              (!prodResults || !prodResults.runs || prodResults.runs[0].results.length === 0)) {
-            comment += '✅ **Security Scan**: No security issues found!\n\n';
-          }
-          
-          comment += '### 📋 Next Steps:\n';
-          comment += '1. Fix any formatting issues with `terraform fmt -recursive`\n';
-          comment += '2. Address any security findings from TFSec\n';
-          comment += '3. Ensure all validations pass\n';
-          comment += '4. Request review and merge to main branch\n';
-          
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: comment
-          });

@@ -9,6 +9,11 @@ on:
       - '*.tf'
       - '*.tfvars'
 
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
 jobs:
   terraform-security:
     name: Terraform Security Checks
@@ -75,41 +80,46 @@ jobs:
       if: github.event_name == 'pull_request'
       with:
         script: |
-          const fs = require('fs');
-          const path = require('path');
-          
-          // Read TFSec results
-          const devResults = fs.existsSync('environments/dev/tfsec-results-dev.sarif') 
-            ? JSON.parse(fs.readFileSync('environments/dev/tfsec-results-dev.sarif', 'utf8'))
-            : null;
-          const prodResults = fs.existsSync('environments/prod/tfsec-results-prod.sarif') 
-            ? JSON.parse(fs.readFileSync('environments/prod/tfsec-results-prod.sarif', 'utf8'))
-            : null;
+          try {
+            const fs = require('fs');
+            const path = require('path');
             
-          let comment = '## 🔒 Terraform Security Scan Results\n\n';
-          
-          if (devResults && devResults.runs && devResults.runs[0].results.length > 0) {
-            comment += '### Dev Environment Issues:\n';
-            devResults.runs[0].results.forEach(result => {
-              comment += `- **${result.ruleId}**: ${result.message.text}\n`;
+            // Read TFSec results
+            const devResults = fs.existsSync('environments/dev/tfsec-results-dev.sarif') 
+              ? JSON.parse(fs.readFileSync('environments/dev/tfsec-results-dev.sarif', 'utf8'))
+              : null;
+            const prodResults = fs.existsSync('environments/prod/tfsec-results-prod.sarif') 
+              ? JSON.parse(fs.readFileSync('environments/prod/tfsec-results-prod.sarif', 'utf8'))
+              : null;
+              
+            let comment = '## 🔒 Terraform Security Scan Results\n\n';
+            
+            if (devResults && devResults.runs && devResults.runs[0].results.length > 0) {
+              comment += '### Dev Environment Issues:\n';
+              devResults.runs[0].results.forEach(result => {
+                comment += `- **${result.ruleId}**: ${result.message.text}\n`;
+              });
+            }
+            
+            if (prodResults && prodResults.runs && prodResults.runs[0].results.length > 0) {
+              comment += '\n### Prod Environment Issues:\n';
+              prodResults.runs[0].results.forEach(result => {
+                comment += `- **${result.ruleId}**: ${result.message.text}\n`;
+              });
+            }
+            
+            if ((!devResults || !devResults.runs || devResults.runs[0].results.length === 0) && 
+                (!prodResults || !prodResults.runs || prodResults.runs[0].results.length === 0)) {
+              comment += '✅ No security issues found!';
+            }
+            
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
             });
+          } catch (error) {
+            console.log('Could not create PR comment:', error.message);
+            console.log('This is expected if the workflow does not have permission to comment on PRs');
           }
-          
-          if (prodResults && prodResults.runs && prodResults.runs[0].results.length > 0) {
-            comment += '\n### Prod Environment Issues:\n';
-            prodResults.runs[0].results.forEach(result => {
-              comment += `- **${result.ruleId}**: ${result.message.text}\n`;
-            });
-          }
-          
-          if ((!devResults || !devResults.runs || devResults.runs[0].results.length === 0) && 
-              (!prodResults || !prodResults.runs || prodResults.runs[0].results.length === 0)) {
-            comment += '✅ No security issues found!';
-          }
-          
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: comment
-          });
