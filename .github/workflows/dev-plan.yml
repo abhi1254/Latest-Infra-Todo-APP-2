@@ -98,7 +98,4 @@ jobs:
         continue-on-error: true
         working-directory: environments/dev
 
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve tfplan || terraform apply -auto-approve
-        working-directory: environments/prod
+      
