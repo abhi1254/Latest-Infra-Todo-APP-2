@@ -94,7 +94,7 @@ module "key_vault" {
   purge_protection_enabled = true
   soft_delete_retention_days = 30
   
-  network_acls_default_action = "Deny"
+  network_acls_default_action = "Allow"
   network_acls_bypass         = "AzureServices"
   virtual_network_subnet_ids  = [module.virtual_network.subnet_ids["aks-subnet"]]
   
