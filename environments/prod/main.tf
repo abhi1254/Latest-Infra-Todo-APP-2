@@ -55,7 +55,7 @@ module "virtual_network" {
           protocol                   = "Tcp"
           source_port_range          = "*"
           destination_port_range     = "443"
-          source_address_prefix      = "*"
+          source_address_prefix      = "10.1.0.0/16"
           destination_address_prefix = "*"
         },
         {
@@ -66,7 +66,7 @@ module "virtual_network" {
           protocol                   = "Tcp"
           source_port_range          = "*"
           destination_port_range     = "80"
-          source_address_prefix      = "*"
+          source_address_prefix      = "10.1.0.0/16"
           destination_address_prefix = "*"
         }
       ]
@@ -99,8 +99,16 @@ module "key_vault" {
   virtual_network_subnet_ids  = [module.virtual_network.subnet_ids["aks-subnet"]]
   
   secrets = {
-    "sql-admin-username" = "todoappadmin"
-    "sql-admin-password" = "TodoAppProd2024!"
+    "sql-admin-username" = {
+      value = "todoappadmin"
+      content_type = "text/plain"
+      expiration_date = "2025-12-31T23:59:59Z"
+    }
+    "sql-admin-password" = {
+      value = "TodoAppProd2024!"
+      content_type = "text/plain"
+      expiration_date = "2025-12-31T23:59:59Z"
+    }
   }
   
   tags = local.common_tags
@@ -189,6 +197,9 @@ module "aks_cluster" {
   rbac_enabled = true
   aad_rbac_enabled = true
   admin_group_object_ids = [data.azurerm_client_config.current.object_id]
+  
+  # Restrict API server access to specific IP ranges (add your office/home IP)
+  api_server_authorized_ip_ranges = ["10.1.0.0/16", "10.2.0.0/16"]
   
   additional_node_pools = {
     "system" = {

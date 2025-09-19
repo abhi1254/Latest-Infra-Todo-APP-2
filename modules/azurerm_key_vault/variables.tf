@@ -79,7 +79,11 @@ variable "virtual_network_subnet_ids" {
 
 variable "secrets" {
   description = "Map of secrets to store in Key Vault"
-  type        = map(string)
+  type        = map(object({
+    value           = string
+    content_type    = optional(string, "text/plain")
+    expiration_date = optional(string, null)
+  }))
   default     = {}
 }
 

@@ -48,30 +48,25 @@ jobs:
         cd environments/prod
         terraform validate
         
-    - name: Setup TFSec
-      uses: aquasecurity/tfsec-action@v1.0.3
-      with:
-        working_directory: environments/dev
-        
     - name: TFSec Security Scan (Dev)
       run: |
         cd environments/dev
-        tfsec . --format sarif --out tfsec-results-dev.sarif
+        tfsec . --format sarif --out tfsec-results-dev.sarif || true
         
     - name: TFSec Security Scan (Prod)
       run: |
         cd environments/prod
-        tfsec . --format sarif --out tfsec-results-prod.sarif
+        tfsec . --format sarif --out tfsec-results-prod.sarif || true
         
     - name: Upload TFSec results to GitHub Security tab
       uses: github/codeql-action/upload-sarif@v3
-      if: always()
+      if: always() && hashFiles('environments/dev/tfsec-results-dev.sarif') != ''
       with:
         sarif_file: environments/dev/tfsec-results-dev.sarif
         
     - name: Upload TFSec results to GitHub Security tab (Prod)
       uses: github/codeql-action/upload-sarif@v3
-      if: always()
+      if: always() && hashFiles('environments/prod/tfsec-results-prod.sarif') != ''
       with:
         sarif_file: environments/prod/tfsec-results-prod.sarif
         

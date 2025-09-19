@@ -147,6 +147,18 @@ variable "additional_node_pools" {
   default = {}
 }
 
+variable "api_server_authorized_ip_ranges" {
+  description = "List of authorized IP ranges for the API server"
+  type        = list(string)
+  default     = []
+}
+
+variable "log_analytics_workspace_id" {
+  description = "ID of the Log Analytics workspace for AKS logging"
+  type        = string
+  default     = null
+}
+
 variable "tags" {
   description = "Tags to apply to the AKS cluster"
   type        = map(string)

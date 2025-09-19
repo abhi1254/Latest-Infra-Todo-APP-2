@@ -28,6 +28,23 @@ resource "azurerm_kubernetes_cluster" "aks" {
 
   role_based_access_control_enabled = var.rbac_enabled
 
+  dynamic "azure_active_directory_role_based_access_control" {
+    for_each = var.aad_rbac_enabled ? [1] : []
+    content {
+      managed                = true
+      admin_group_object_ids = var.admin_group_object_ids
+    }
+  }
+
+  dynamic "oms_agent" {
+    for_each = var.log_analytics_workspace_id != null ? [1] : []
+    content {
+      log_analytics_workspace_id = var.log_analytics_workspace_id
+    }
+  }
+
+  api_server_authorized_ip_ranges = var.api_server_authorized_ip_ranges
+
   tags = var.tags
 }
 
