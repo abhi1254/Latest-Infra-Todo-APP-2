@@ -21,7 +21,7 @@ locals {
   
   # Naming convention
   name_prefix = "todo-prod"
-  location    = "East US"
+  location    = "East US 2"
 }
 
 # Resource Group
@@ -178,13 +178,13 @@ module "aks_cluster" {
   dns_prefix   = "${local.name_prefix}-aks"
   
   default_node_pool_name = "default"
-  default_node_pool_count = 2
-  default_node_pool_vm_size = "Standard_D4s_v3"
+  default_node_pool_count = 1
+  default_node_pool_vm_size = "Standard_D2s_v3"
   vnet_subnet_id = module.virtual_network.subnet_ids["aks-subnet"]
   
-  enable_auto_scaling = true
-  min_count = 2
-  max_count = 10
+  enable_auto_scaling = false
+  min_count = 1
+  max_count = 1
   max_pods = 50
   os_disk_size_gb = 50
   
@@ -204,23 +204,7 @@ module "aks_cluster" {
   # Enable OMS agent by wiring a prod Log Analytics workspace
   log_analytics_workspace_id = azurerm_log_analytics_workspace.prod_law.id
   
-  additional_node_pools = {
-    "system" = {
-      vm_size = "Standard_D4s_v3"
-      node_count = 2
-      os_type = "Linux"
-      mode = "System"
-    }
-    "user" = {
-      vm_size = "Standard_D4s_v3"
-      node_count = 1
-      enable_auto_scaling = true
-      min_count = 1
-      max_count = 5
-      os_type = "Linux"
-      mode = "User"
-    }
-  }
+  additional_node_pools = {}
   
   tags = local.common_tags
 }
