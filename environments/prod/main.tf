@@ -24,6 +24,15 @@ locals {
   location    = "East US 2"
 }
 
+# Random suffix for globally-unique resource names (e.g., Key Vault)
+resource "random_string" "kv_suffix" {
+  length  = 6
+  upper   = false
+  lower   = true
+  numeric = false
+  special = false
+}
+
 # Resource Group
 module "resource_group" {
   source = "../../modules/azurerm_resource_group"
@@ -84,7 +93,7 @@ module "virtual_network" {
 module "key_vault" {
   source = "../../modules/azurerm_key_vault"
   
-  key_vault_name      = "${local.name_prefix}-kv"
+  key_vault_name      = "${local.name_prefix}-kv-${random_string.kv_suffix.result}"
   location            = local.location
   resource_group_name = module.resource_group.resource_group_name
   tenant_id           = data.azurerm_client_config.current.tenant_id
