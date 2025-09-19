@@ -40,7 +40,7 @@ module "resource_group" {
   tags               = local.common_tags
 }
 
-# Virtual Network
+# Virtual 
 module "virtual_network" {
   source = "../../modules/azurerm_virtual_network"
   
