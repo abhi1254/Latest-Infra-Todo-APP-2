@@ -1,0 +1,145 @@
+name: Prod Environment Apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+        - prod
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+        - plan
+        - apply
+        - destroy
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  terraform-prod:
+    name: Terraform ${{ github.event.inputs.action }} - Prod Environment
+    runs-on: ubuntu-latest
+    environment: 
+      name: prod
+      url: ${{ steps.deploy.outputs.web_url }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.0
+        
+    - name: Configure Azure credentials
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
+    - name: Terraform Init
+      run: |
+        cd environments/prod
+        terraform init
+        
+    - name: Terraform Plan
+      id: plan
+      run: |
+        cd environments/prod
+        terraform plan -out=tfplan -no-color
+      continue-on-error: true
+      
+    - name: Terraform Plan Status
+      if: steps.plan.outcome == 'failure'
+      run: |
+        echo "Terraform plan failed. Check the logs above for details."
+        exit 1
+        
+    - name: Manual Approval for Apply
+      if: github.event.inputs.action == 'apply'
+      uses: trstringer/manual-approval@v1
+      with:
+        secret: ${{ github.TOKEN }}
+        approvers: ${{ secrets.APPROVERS }}
+        minimum-approvals: 1
+        issue-title: "Manual approval required for Prod Apply"
+        issue-body: |
+          Please review the Terraform plan and approve the deployment to production.
+          
+          **Environment**: ${{ github.event.inputs.environment }}
+          **Action**: ${{ github.event.inputs.action }}
+          **Commit**: ${{ github.sha }}
+          
+          This will apply changes to the production environment.
+        exclude-workflow-initiator-as-approver: false
+        
+    - name: Terraform Apply
+      if: github.event.inputs.action == 'apply'
+      run: |
+        cd environments/prod
+        terraform apply -auto-approve tfplan
+        
+    - name: Terraform Destroy
+      if: github.event.inputs.action == 'destroy'
+      run: |
+        cd environments/prod
+        terraform destroy -auto-approve
+        
+    - name: Output Results
+      id: deploy
+      run: |
+        cd environments/prod
+        echo "web_url=https://portal.azure.com" >> $GITHUB_OUTPUT
+        
+    - name: Comment Results on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          try {
+            const action = '${{ github.event.inputs.action }}';
+            const environment = '${{ github.event.inputs.environment }}';
+            
+            let comment = `## 🚀 Terraform ${action.charAt(0).toUpperCase() + action.slice(1)} - ${environment.charAt(0).toUpperCase() + environment.slice(1)} Environment
+            
+            **Status**: ✅ Completed Successfully
+            **Action**: ${action}
+            **Environment**: ${environment}
+            **Commit**: ${{ github.sha }}`;
+            
+            if (action === 'apply') {
+              comment += `
+              
+              ### 🎉 Deployment Complete!
+              - Environment: ${environment}
+              - Resources deployed successfully
+              - Check Azure Portal for details`;
+            }
+            
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          } catch (error) {
+            console.log('Could not create PR comment:', error.message);
+            console.log('This is expected if the workflow does not have permission to comment on PRs');
+          }
+          
+    - name: Upload Plan Artifact
+      if: github.event.inputs.action == 'plan'
+      uses: actions/upload-artifact@v4
+      with:
+        name: terraform-plan-prod
+        path: environments/prod/tfplan
+        retention-days: 30
