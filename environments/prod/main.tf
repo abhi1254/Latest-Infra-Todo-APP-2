@@ -112,6 +112,10 @@ module "key_vault" {
   }
   
   tags = local.common_tags
+
+  depends_on = [
+    module.virtual_network
+  ]
 }
 
 # Storage Account
@@ -207,6 +211,10 @@ module "aks_cluster" {
   additional_node_pools = {}
   
   tags = local.common_tags
+
+  depends_on = [
+    module.virtual_network
+  ]
 }
 
 # Log Analytics Workspace for AKS logging (prod)
