@@ -32,7 +32,9 @@ jobs:
           storage_account_name: backupstorge
 
       - name: Terraform Init
-        run: terraform init -input=false -reconfigure
+        run: |
+          rm -rf .terraform
+          terraform init -input=false -reconfigure
         working-directory: environments/dev
 
       - name: Terraform Plan
