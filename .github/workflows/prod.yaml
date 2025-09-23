@@ -29,9 +29,9 @@ jobs:
         uses: ahmedig/terraform-azurerm-backend@v4
         with:
           azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
-          resource_group_name: backendrg
-          container_name: backendcontainer
-          storage_account_name: backendstorge
+          resource_group_name: backuprg
+          container_name: backupcontainer1254
+          storage_account_name: backupstorge
 
       - name: Terraform Init
         run: terraform init -input=false
