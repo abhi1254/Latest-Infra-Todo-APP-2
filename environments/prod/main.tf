@@ -24,12 +24,28 @@ locals {
   location    = "East US 2"
 }
 
-# Random suffix for globally-unique resource names (e.g., Key Vault)
+# Random suffixes for globally-unique resource names
 resource "random_string" "kv_suffix" {
+  length  = 8
+  upper   = false
+  lower   = true
+  numeric = true
+  special = false
+}
+
+resource "random_string" "sql_suffix" {
   length  = 6
   upper   = false
   lower   = true
-  numeric = false
+  numeric = true
+  special = false
+}
+
+resource "random_string" "stg_suffix" {
+  length  = 6
+  upper   = false
+  lower   = true
+  numeric = true
   special = false
 }
 
@@ -131,7 +147,7 @@ module "key_vault" {
 module "storage_account" {
   source = "../../modules/azurerm_storage_account"
   
-  storage_account_name   = replace("${local.name_prefix}stg", "-", "")
+  storage_account_name   = lower(replace("${local.name_prefix}stg${random_string.stg_suffix.result}", "-", ""))
   resource_group_name    = module.resource_group.resource_group_name
   location              = local.location
   account_tier          = "Standard"
@@ -146,7 +162,7 @@ module "storage_account" {
 module "sql_server" {
   source = "../../modules/azurerm_sql_server"
   
-  sql_server_name = "${local.name_prefix}-sql"
+  sql_server_name = "${local.name_prefix}-sql-${random_string.sql_suffix.result}"
   rg_name         = module.resource_group.resource_group_name
   location        = local.location
   admin_username  = "todoappadmin"
