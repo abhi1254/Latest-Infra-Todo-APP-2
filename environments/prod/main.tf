@@ -21,7 +21,7 @@ locals {
   
   # Naming convention
   name_prefix = "todo-prod"
-  location    = "East US 2"
+  location    = "East US"
 }
 
 # Random suffix for globally-unique resource names (e.g., Key Vault)
