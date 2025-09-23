@@ -29,10 +29,10 @@ jobs:
           azure_credentials: ${{ secrets.AZURE_CREDENTIALS }}
           resource_group_name: backuprg
           container_name: backupcontainer1254
-          storage_account_name: backupstorge 
+          storage_account_name: backupstorge
 
       - name: Terraform Init
-        run: terraform init -input=false
+        run: terraform init -input=false -reconfigure
         working-directory: environments/dev
 
       - name: Terraform Plan
