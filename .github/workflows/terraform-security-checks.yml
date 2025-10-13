@@ -64,13 +64,13 @@ jobs:
         tfsec . --format sarif --out tfsec-results-prod.sarif || true
         
     - name: Upload TFSec results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       if: always() && hashFiles('environments/dev/tfsec-results-dev.sarif') != ''
       with:
         sarif_file: environments/dev/tfsec-results-dev.sarif
         
     - name: Upload TFSec results to GitHub Security tab (Prod)
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       if: always() && hashFiles('environments/prod/tfsec-results-prod.sarif') != ''
       with:
         sarif_file: environments/prod/tfsec-results-prod.sarif
